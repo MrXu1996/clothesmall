@@ -33,7 +33,13 @@ export default {
     },
     finishPullUp() {
       this.scroll.finishPullUp()
-    }
+    },
+    imgLoad() {
+      this.scroll.refresh()
+    },
+    getScrollY() {
+      return this.scroll ? this.scroll.y : 0
+    }    
   },
   mounted() {
     // $refs.wrapper拿到的就是 ref= "wrapper"的div元素
