@@ -1,15 +1,17 @@
 <template>
   <div id="detail">
-    <detail-nav-bar class="detail-nav"></detail-nav-bar>
-    <scroll class="content" ref="scroll">
+    <detail-nav-bar ref="nav" class="detail-nav" @titleClick="titleClick"></detail-nav-bar>
+    <scroll class="content" ref="scroll" :probe-type="3" @scroll="contentScroll">
       <detail-swiper :top-imgs="topImgs"></detail-swiper>
       <detail-base-info :goods="goods"></detail-base-info>
       <detail-shop-info :shop="shops"></detail-shop-info>
       <detail-goods-info :detail-info="detailInfo" @imgLoad="imageLoad"></detail-goods-info>
-      <detail-param-info :param-info="paramInfo"></detail-param-info>
-      <detail-comment-info :comment-info="commentInfo"></detail-comment-info>
-      <goods-list :goods="recommends"></goods-list>
+      <detail-param-info ref="param" :param-info="paramInfo"></detail-param-info>
+      <detail-comment-info ref="comment" :comment-info="commentInfo"></detail-comment-info>
+      <goods-list ref="recommend" :goods="recommends"></goods-list>
     </scroll>
+    <detail-bottom-bar @addToCart="addToCart"></detail-bottom-bar>
+    <back-top @click.native="backClick" v-show="showBackTop"></back-top>
   </div>
 </template>
 
@@ -21,6 +23,8 @@ import DetailShopInfo from "./childComps/DetailShopInfo";
 import DetailGoodsInfo from "./childComps/DetailGoodsInfo";
 import DetailParamInfo from "./childComps/DetailParamInfo";
 import DetailCommentInfo from "./childComps/DetailCommentInfo";
+import DetailBottomBar from "./childComps/DetailBottomBar";
+import BackTop from "components/common/backtop/BackTop";
 
 import Scroll from "components/common/scroll/Scroll";
 import GoodsList from "components/content/goods/GoodsList";
@@ -46,7 +50,11 @@ export default {
       detailInfo: {},
       paramInfo: {},
       commentInfo: {},
-      recommends: []
+      recommends: [],
+      themeTopYs: [],
+      getThemeTopY: null,
+      currentIndex: 0,
+      showBackTop: false
     };
   },
   mixins: [itemListenerMixin],
@@ -81,6 +89,15 @@ export default {
       if (data.rate.cRate !== 0) {
         this.commentInfo = data.rate.list[0];
       }
+
+      this.getThemeTopY = debounce(() => {
+        this.themeTopYs = [];
+        this.themeTopYs.push(0);
+        this.themeTopYs.push(this.$refs.param.$el.offsetTop);
+        this.themeTopYs.push(this.$refs.comment.$el.offsetTop);
+        this.themeTopYs.push(this.$refs.recommend.$el.offsetTop);
+        this.themeTopYs.push(Number.MAX_VALUE)
+      }, 100);
     });
     // 请求推荐数据
     getRecommend().then(res => {
@@ -99,11 +116,45 @@ export default {
     DetailParamInfo,
     DetailCommentInfo,
     GoodsList,
+    DetailBottomBar,
+    BackTop,
     Scroll
   },
   methods: {
     imageLoad() {
       this.$refs.scroll.scroll.refresh();
+
+      this.getThemeTopY()
+    },
+    titleClick(index) {
+      this.$refs.scroll.scroll.scrollTo(0, -this.themeTopYs[index], 200);
+    },
+    contentScroll(position) {
+      const positionY = -position.y
+      
+      let length = this.themeTopYs.length
+      for(let i = 0; i < length -1 ; i++) {
+        if(this.currentIndex !== i && (positionY >= this.themeTopYs[i] && positionY < this.themeTopYs[i+1])) {
+          this.currentIndex = i
+        }
+      }
+      this.$refs.nav.currentIndex = this.currentIndex
+
+      this.showBackTop = -position.y > 600;
+    },
+    backClick() {
+      this.$refs.scroll.scrollTo(0, 0);
+    },
+    addToCart() {
+      const product = {}
+      product.title = this.goods.title
+      product.iid = this.iid
+      product.img = this.topImgs[0]
+      product.desc = this.goods.desc
+      product.price = this.goods.realPrice
+
+      this.$store.commit('addCart', product)
+      
     }
   }
 };
@@ -126,6 +177,7 @@ export default {
   top: 44px;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: 49px;
+  overflow: hidden;
 }
 </style>
