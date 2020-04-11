@@ -12,6 +12,7 @@
     </scroll>
     <detail-bottom-bar @addToCart="addToCart"></detail-bottom-bar>
     <back-top @click.native="backClick" v-show="showBackTop"></back-top>
+    <toast :message="message" :isShow="show"></toast>
   </div>
 </template>
 
@@ -28,6 +29,7 @@ import BackTop from "components/common/backtop/BackTop";
 
 import Scroll from "components/common/scroll/Scroll";
 import GoodsList from "components/content/goods/GoodsList";
+import Toast from "components/common/toast/Toast";
 
 import {
   getDetail,
@@ -54,8 +56,24 @@ export default {
       themeTopYs: [],
       getThemeTopY: null,
       currentIndex: 0,
-      showBackTop: false
+      showBackTop: false,
+      message: '',
+      show: false
     };
+  },
+  components: {
+    DetailNavBar,
+    DetailSwiper,
+    DetailBaseInfo,
+    DetailShopInfo,
+    DetailGoodsInfo,
+    DetailParamInfo,
+    DetailCommentInfo,
+    GoodsList,
+    DetailBottomBar,
+    BackTop,
+    Scroll,
+    Toast
   },
   mixins: [itemListenerMixin],
   created() {
@@ -107,19 +125,6 @@ export default {
   destroyed() {
     this.$bus.$off("itemImgLoad", this.itemListener);
   },
-  components: {
-    DetailNavBar,
-    DetailSwiper,
-    DetailBaseInfo,
-    DetailShopInfo,
-    DetailGoodsInfo,
-    DetailParamInfo,
-    DetailCommentInfo,
-    GoodsList,
-    DetailBottomBar,
-    BackTop,
-    Scroll
-  },
   methods: {
     imageLoad() {
       this.$refs.scroll.scroll.refresh();
@@ -146,6 +151,7 @@ export default {
       this.$refs.scroll.scrollTo(0, 0);
     },
     addToCart() {
+      // 1.获取购物车需要展示的信息
       const product = {}
       product.title = this.goods.title
       product.iid = this.iid
@@ -153,8 +159,17 @@ export default {
       product.desc = this.goods.desc
       product.price = this.goods.realPrice
 
-      this.$store.commit('addCart', product)
+      // 2.将商品添加到购物车里
+      this.$store.dispatch('addCart', product).then(res => {
+        this.show = true;
+        this.message = res;
+        setTimeout(() => {
+          this.show = false;
+          this.message = '';
+        },1500)
+      })
       
+      // 3.添加到购物车成功
     }
   }
 };

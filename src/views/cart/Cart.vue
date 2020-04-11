@@ -4,12 +4,14 @@
         <div slot="center">购物车({{cartLength}})</div>
       </nav-bar>
       <cart-list></cart-list>
+      <cart-bottom-bar></cart-bottom-bar>
   </div>
 </template>
 
 <script>
 import NavBar from 'components/common/navbar/NavBar'
 import CartList from './childComps/CartList'
+import CartBottomBar from './childComps/CartBottomBar'
 
 
 export default {
@@ -21,7 +23,8 @@ export default {
   },
   components: {
     NavBar,
-    CartList
+    CartList,
+    CartBottomBar
   },
   methods: {},
   computed: {
